@@ -94,7 +94,8 @@ dist
 
 # vuepress v2.x temp directory
 .temp
-
+AGENTS.md
+docs
 # Sveltekit cache directory
 .svelte-kit/
 
