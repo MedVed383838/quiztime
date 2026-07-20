@@ -1,0 +1,33 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #18212f;
+  background: #f5f7fb;
+}
+
+* { box-sizing: border-box; }
+
+body { margin: 0; }
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+.welcome-card {
+  max-width: 42rem;
+  padding: 3rem;
+  background: white;
+  border: 1px solid #dfe5ef;
+  border-radius: 1rem;
+  box-shadow: 0 1rem 3rem rgb(24 33 47 / 8%);
+}
+
+.eyebrow {
+  margin: 0 0 0.75rem;
+  color: #536dfe;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
