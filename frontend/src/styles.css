@@ -71,3 +71,53 @@ body { margin: 0; }
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+
+.game-shell { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; background: #eefaff; }
+.game-card { width: min(100%, 72rem); padding: clamp(1.5rem, 4vw, 3.5rem); border: 1px solid #dbe5eb; border-radius: 1.5rem; background: #fff; box-shadow: 0 1.5rem 4rem rgb(67 56 202 / 12%); }
+.game-topbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 2rem; color: #4b5563; }
+.brand-mark { color: #5542d5; font-size: 1.35rem; font-weight: 800; }
+.lobby-badge, .timer-badge, .question-type { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.5rem 0.9rem; border-radius: 999px; background: #e1eef2; color: #4338ca; font-weight: 700; }
+.pin-panel { margin: 1rem auto 2rem; padding: 1.5rem; text-align: center; border-radius: 1.25rem; background: linear-gradient(135deg, #6655df, #5542d5); color: white; }
+.pin-panel p { margin: 0 0 0.5rem; letter-spacing: 0.2em; opacity: 0.8; }
+.pin-panel strong { font-size: clamp(2rem, 6vw, 4rem); letter-spacing: 0.2em; }
+.participant-heading { display: flex; align-items: center; gap: 0.75rem; border-bottom: 1px solid #e5e7eb; }
+.participant-heading h1 { margin: 0.5rem 0 1rem; }
+.participant-heading > span { display: inline-grid; place-items: center; min-width: 2rem; height: 2rem; border-radius: 999px; background: #ede9fe; color: #5542d5; font-weight: 800; }
+.participant-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.75rem; padding: 0; margin: 1.25rem 0; list-style: none; }
+.participant-grid li { display: grid; gap: 0.25rem; padding: 0.9rem; border: 1px solid #ddd6fe; border-radius: 0.75rem; background: #f5f3ff; }
+.participant-grid li small { color: #6b7280; }
+.participant-grid li.disconnected { opacity: 0.55; }
+.lobby-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
+.game-primary-button, .game-secondary-button { font: inherit; padding: 0.85rem 1.25rem; border-radius: 0.75rem; cursor: pointer; }
+.game-primary-button { border: 0; background: #6655df; color: white; }
+.game-secondary-button { border: 1px solid #c7c4df; background: white; color: #403b5f; }
+.game-primary-button:disabled, .game-secondary-button:disabled { opacity: 0.55; cursor: not-allowed; }
+.question-screen h1, .review-screen h1 { max-width: 58rem; margin: 1.25rem auto; text-align: center; font-size: clamp(2rem, 5vw, 4rem); line-height: 1.08; }
+.question-screen, .review-screen { text-align: center; }
+.question-hero-image { display: block; width: min(100%, 48rem); max-height: 22rem; object-fit: contain; margin: 1.5rem auto; border-radius: 1rem; }
+.host-question-state { margin: 2rem auto; padding: 1.5rem; max-width: 32rem; border-radius: 1rem; background: #f5f3ff; color: #403b5f; }
+.host-question-state strong { font-size: 1.5rem; color: #5542d5; }
+.answer-options { display: grid; gap: 0.85rem; width: min(100%, 46rem); margin: 1.5rem auto; }
+.answer-option { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 3.5rem; padding: 1rem 1.15rem; text-align: left; font: inherit; border: 2px solid #d7d2e7; border-radius: 1rem; background: white; color: #18212f; cursor: pointer; }
+.answer-option.selected { border-color: #6655df; background: #f2efff; }
+.answer-option:disabled { cursor: default; }
+.option-indicator { color: #6655df; font-size: 1.25rem; font-weight: 800; }
+.question-screen > .game-primary-button { min-width: 12rem; }
+.review-stats { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; margin: 1.5rem 0; }
+.review-stats strong { padding: 0.75rem 1rem; border-radius: 0.75rem; background: #e1eef2; color: #403b5f; }
+.option-stats { display: grid; gap: 0.7rem; width: min(100%, 36rem); margin: 1.5rem auto; }
+.option-stats div { display: flex; justify-content: space-between; padding: 0.9rem 1rem; border-radius: 0.75rem; background: #f5f3ff; }
+.score-result { color: #5542d5; font-size: 2.5rem; font-weight: 800; }
+.review-note { color: #6b7280; }
+.game-error { color: #b91c1c; }
+
+@media (max-width: 640px) {
+  .game-shell { padding: 0.5rem; align-items: start; }
+  .game-card { min-height: calc(100vh - 1rem); border-radius: 1rem; padding: 1.1rem; }
+  .game-topbar { flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .question-screen h1, .review-screen h1 { font-size: 2rem; text-align: left; }
+  .question-type { font-size: 0.8rem; }
+  .pin-panel strong { font-size: 2.3rem; }
+  .participant-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lobby-actions > * { flex: 1 1 100%; }
+}
