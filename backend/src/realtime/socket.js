@@ -1,5 +1,7 @@
 import { Server } from "socket.io";
+import { z } from "zod";
 import { COOKIE_NAME, verifyToken } from "../auth/auth.service.js";
+import { createGameService, GameError } from "../session/game.service.js";
 
 export let realtimeIo = null;
 
@@ -26,6 +28,10 @@ export function createSocketServer(httpServer, prisma) {
     cors: { origin: true, credentials: true },
   });
   const activeSockets = new Map();
+  const gameService = createGameService(prisma);
+  const sessionPayload = z.object({ sessionId: z.number().int().positive() });
+  const answerPayload = sessionPayload.extend({ questionId: z.number().int().positive(), optionIds: z.array(z.number().int().positive()).max(6) });
+  const errorAck = (error) => ({ ok: false, error: { code: error instanceof GameError ? error.code : "INTERNAL_ERROR", message: error.message ?? "Ошибка сессии" } });
 
   io.use(async (socket, next) => {
     try {
@@ -92,9 +98,32 @@ export function createSocketServer(httpServer, prisma) {
           hostDisplayName: isHost ? undefined : session.host.displayName,
           myScore: participant?.totalScore ?? 0,
         };
-        return ack({ ok: true, data: snapshot });
+        const phaseSnapshot = await gameService.getPhaseSnapshot(session.id, socket.data.userId);
+        return ack({ ok: true, data: { ...snapshot, ...(phaseSnapshot ?? {}) } });
       } catch {
         return ack({ ok: false, error: { code: "INTERNAL_ERROR", message: "Ошибка сессии" } });
+      }
+    });
+
+    socket.on("question:start", async (payload, ack = () => {}) => {
+      const parsed = sessionPayload.safeParse(payload);
+      if (!parsed.success) return ack({ ok: false, error: { code: "VALIDATION_ERROR", message: "Некорректный sessionId" } });
+      try {
+        const data = await gameService.startQuestion(parsed.data.sessionId, socket.data.userId, io);
+        return ack({ ok: true, data });
+      } catch (error) {
+        return ack(errorAck(error));
+      }
+    });
+
+    socket.on("answer:submit", async (payload, ack = () => {}) => {
+      const parsed = answerPayload.safeParse(payload);
+      if (!parsed.success) return ack({ ok: false, error: { code: "VALIDATION_ERROR", message: "Некорректный ответ" } });
+      try {
+        const data = await gameService.submitAnswer({ ...parsed.data, userId: socket.data.userId }, io);
+        return ack({ ok: true, data });
+      } catch (error) {
+        return ack(errorAck(error));
       }
     });
 
@@ -118,6 +147,7 @@ export function createSocketServer(httpServer, prisma) {
     });
   });
   realtimeIo = io;
+  void gameService.recover(io).catch(() => {});
 
   return io;
 }
