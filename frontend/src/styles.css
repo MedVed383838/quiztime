@@ -51,6 +51,18 @@ body { margin: 0; }
 .checkbox-label input { width: 1.1rem; height: 1.1rem; }
 .notice { padding: 0.75rem 1rem; background: #fff7ed; border-radius: 0.5rem; }
 .questions-placeholder { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #dfe5ef; }
+.question-form { display: grid; gap: 1rem; margin-top: 1.25rem; padding: 1.25rem; border: 1px solid #dfe5ef; border-radius: 0.75rem; background: #f8fafc; }
+.question-form > label { display: grid; gap: 0.4rem; }
+.question-form textarea, .question-form select, .question-form input:not([type="radio"]):not([type="checkbox"]) { width: 100%; font: inherit; padding: 0.7rem 0.8rem; border: 1px solid #cbd5e1; border-radius: 0.45rem; background: white; }
+.question-form textarea { min-height: 7rem; resize: vertical; }
+.question-form input[type="file"] { font: inherit; }
+.question-options { display: grid; gap: 0.7rem; }
+.question-options h3 { margin: 0; }
+.option-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.75rem; align-items: center; }
+.option-row > label { display: flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+.question-image { max-width: 100%; max-height: 12rem; object-fit: contain; border-radius: 0.5rem; }
+.question-form button { font: inherit; padding: 0.7rem 1rem; border: 0; border-radius: 0.5rem; color: white; background: #536dfe; cursor: pointer; }
+.question-form button[type="button"] { color: #18212f; background: white; border: 1px solid #cbd5e1; }
 
 .eyebrow {
   margin: 0 0 0.75rem;
