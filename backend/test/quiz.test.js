@@ -49,6 +49,24 @@ describe("quiz management", () => {
     expect(ready.body.error.code).toBe("QUIZ_INVALID");
   });
 
+  it("creates, updates and deletes questions with strict option validation", async () => {
+    const created = await agent.post(`/api/quizzes/${quizId}/questions`).send({
+      text: "Сколько будет два плюс два?", type: "SINGLE_CHOICE", options: [
+        { text: "4", isCorrect: true }, { text: "5", isCorrect: false },
+      ],
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.data.question.options).toHaveLength(2);
+    const questionId = created.body.data.question.id;
+    const invalid = await agent.post(`/api/quizzes/${quizId}/questions`).send({ text: "Ошибка", type: "SINGLE_CHOICE", options: [{ text: "A", isCorrect: true }, { text: "B", isCorrect: true }] });
+    expect(invalid.status).toBe(400);
+    const updated = await agent.put(`/api/questions/${questionId}`).send({ text: "Обновлённый вопрос", type: "MULTIPLE_CHOICE", options: [{ text: "4", isCorrect: true }, { text: "Четыре", isCorrect: true }, { text: "5", isCorrect: false }] });
+    expect(updated.status).toBe(200);
+    expect(updated.body.data.question.type).toBe("MULTIPLE_CHOICE");
+    const deleted = await agent.delete(`/api/questions/${questionId}`);
+    expect(deleted.status).toBe(200);
+  });
+
   it("supports archive and rejects unauthenticated access", async () => {
     const archive = await agent.post(`/api/quizzes/${quizId}/archive`);
     expect(archive.status).toBe(200);

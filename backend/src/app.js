@@ -6,6 +6,10 @@ import { createAuthRouter } from "./auth/auth.routes.js";
 import { requireAuth } from "./auth/auth.middleware.js";
 import { prisma } from "./lib/prisma.js";
 import { createQuizRouter } from "./quiz/quiz.routes.js";
+import { createQuestionRouter } from "./question/question.routes.js";
+import { createUploadRouter } from "./upload/upload.routes.js";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const app = express();
 
@@ -27,6 +31,10 @@ app.get("/api/categories", requireAuth(prisma), async (_request, response, next)
   }
 });
 app.use("/api/quizzes", createQuizRouter(prisma));
+app.use("/api", createQuestionRouter(prisma));
+const backendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+app.use("/uploads", express.static(path.join(backendRoot, "uploads")));
+app.use("/api/uploads", createUploadRouter(prisma));
 
 app.use((error, _request, response, _next) => {
   console.error(error);
