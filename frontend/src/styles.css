@@ -28,6 +28,29 @@ body { margin: 0; }
 .auth-form input, .auth-form button, .welcome-card button { font: inherit; padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; }
 .auth-form button, .welcome-card button { color: white; background: #536dfe; border: 0; cursor: pointer; }
 .auth-form button:disabled { opacity: 0.6; cursor: wait; }
+.dashboard-card { width: min(100%, 58rem); }
+.dashboard-header { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
+.header-actions, .quiz-item-actions, .editor-header { display: flex; align-items: center; gap: 0.75rem; }
+.primary-link { color: white; background: #536dfe; padding: 0.75rem 1rem; border-radius: 0.5rem; text-decoration: none; }
+.tabs { display: flex; gap: 0.5rem; margin: 2rem 0 1.5rem; flex-wrap: wrap; }
+.tabs button { color: #18212f; font: inherit; padding: 0.6rem 0.8rem; border: 1px solid #dfe5ef; border-radius: 0.5rem; background: #fff; cursor: pointer; }
+.tabs button.active { color: white; background: #536dfe; border-color: #536dfe; }
+.quiz-list { display: grid; gap: 0.75rem; }
+.quiz-item { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: 1rem; border: 1px solid #dfe5ef; border-radius: 0.75rem; }
+.quiz-item h2 { margin: 0; font-size: 1.1rem; }
+.quiz-item p { margin: 0.35rem 0 0; color: #64748b; }
+.quiz-item-actions a { color: #536dfe; }
+.editor-card { width: min(100%, 48rem); }
+.editor-header { justify-content: space-between; margin-bottom: 1.5rem; }
+.editor-header h1 { margin-bottom: 0; }
+.editor-form label { display: grid; gap: 0.4rem; }
+.editor-form input, .editor-form textarea, .editor-form select { font: inherit; padding: 0.75rem 1rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; }
+.editor-form textarea { min-height: 7rem; resize: vertical; }
+.editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.checkbox-label { display: flex !important; align-items: center; }
+.checkbox-label input { width: 1.1rem; height: 1.1rem; }
+.notice { padding: 0.75rem 1rem; background: #fff7ed; border-radius: 0.5rem; }
+.questions-placeholder { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #dfe5ef; }
 
 .eyebrow {
   margin: 0 0 0.75rem;
