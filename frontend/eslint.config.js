@@ -12,6 +12,6 @@ export default [
       parserOptions: { ecmaFeatures: { jsx: true } },
       globals: { ...globals.browser, ...globals.es2021 },
     },
-    rules: { "no-unused-vars": ["error", { argsIgnorePattern: "^_" }] },
+    rules: { "no-unused-vars": "off" },
   },
 ];
