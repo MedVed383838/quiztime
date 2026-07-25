@@ -9,6 +9,7 @@ import { createQuizRouter } from "./quiz/quiz.routes.js";
 import { createQuestionRouter } from "./question/question.routes.js";
 import { createUploadRouter } from "./upload/upload.routes.js";
 import { createSessionRouter } from "./session/session.routes.js";
+import { createHistoryRouter } from "./history/history.routes.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -37,6 +38,7 @@ const backendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 app.use("/uploads", express.static(path.join(backendRoot, "uploads")));
 app.use("/api/uploads", createUploadRouter(prisma));
 app.use("/api/sessions", createSessionRouter(prisma));
+app.use("/api/me", createHistoryRouter(prisma));
 
 app.use((error, _request, response, _next) => {
   console.error(error);
