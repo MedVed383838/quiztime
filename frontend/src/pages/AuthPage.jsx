@@ -27,17 +27,22 @@ export default function AuthPage({ mode }) {
   }
 
   return (
-    <main className="app-shell">
-      <form className="welcome-card auth-form" onSubmit={submit}>
-        <p className="eyebrow">QuizTime</p>
-        <h1>{isRegister ? "Регистрация" : "Вход"}</h1>
-        {isRegister && <input aria-label="Имя" placeholder="Имя" minLength="2" maxLength="40" required value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} />}
-        <input aria-label="Email" type="email" placeholder="Email" required value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
-        <input aria-label="Пароль" type="password" placeholder="Пароль" minLength="8" required value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
-        {error && <p role="alert">Ошибка: {error}</p>}
-        <button type="submit" disabled={submitting}>{submitting ? "Сохраняем…" : isRegister ? "Создать аккаунт" : "Войти"}</button>
-        <Link to={isRegister ? "/login" : "/register"}>{isRegister ? "Уже есть аккаунт" : "Создать аккаунт"}</Link>
-      </form>
+    <main className="app-shell auth-shell">
+      <section className="auth-layout">
+        <Link className="brand-link" to="/">QuizTime</Link>
+        <form className="welcome-card auth-form auth-card" onSubmit={submit}>
+          <div className="auth-icon" aria-hidden="true">?</div>
+          <p className="eyebrow">{isRegister ? "Новый аккаунт" : "С возвращением"}</p>
+          <h1>{isRegister ? "Создайте аккаунт" : "Войдите в QuizTime"}</h1>
+          <p className="auth-copy">{isRegister ? "Собирайте квизы и запускайте игры в реальном времени." : "Продолжайте создавать и проводить свои квизы."}</p>
+          {isRegister && <label>Имя<input aria-label="Имя" placeholder="Как к вам обращаться" minLength="2" maxLength="40" required value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} /></label>}
+          <label>Email<input aria-label="Email" type="email" placeholder="name@example.com" required value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
+          <label>Пароль<input aria-label="Пароль" type="password" placeholder="Минимум 8 символов" minLength="8" required value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} /></label>
+          {error && <p className="form-alert" role="alert">Ошибка: {error}</p>}
+          <button type="submit" disabled={submitting}>{submitting ? "Сохраняем…" : isRegister ? "Создать аккаунт" : "Войти"}</button>
+          <p className="auth-switch">{isRegister ? "Уже есть аккаунт?" : "Ещё нет аккаунта?"} <Link to={isRegister ? "/login" : "/register"}>{isRegister ? "Войти" : "Зарегистрироваться"}</Link></p>
+        </form>
+      </section>
     </main>
   );
 }
