@@ -116,6 +116,17 @@ export function createSocketServer(httpServer, prisma) {
       }
     });
 
+    socket.on("session:finish", async (payload, ack = () => {}) => {
+      const parsed = sessionPayload.safeParse(payload);
+      if (!parsed.success) return ack({ ok: false, error: { code: "VALIDATION_ERROR", message: "Некорректный sessionId" } });
+      try {
+        const data = await gameService.finishSession(parsed.data.sessionId, socket.data.userId, io);
+        return ack({ ok: true, data });
+      } catch (error) {
+        return ack(errorAck(error));
+      }
+    });
+
     socket.on("answer:submit", async (payload, ack = () => {}) => {
       const parsed = answerPayload.safeParse(payload);
       if (!parsed.success) return ack({ ok: false, error: { code: "VALIDATION_ERROR", message: "Некорректный ответ" } });

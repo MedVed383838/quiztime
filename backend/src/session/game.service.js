@@ -1,3 +1,5 @@
+import { buildLeaderboard, resultForParticipant } from "./results.service.js";
+
 export class GameError extends Error {
   constructor(code, message) {
     super(message);
@@ -51,6 +53,18 @@ function resultForAnswer(answer, question, session) {
   };
 }
 
+function finishedSnapshot(session, userId) {
+  const leaderboard = buildLeaderboard(session.participants);
+  const isHost = session.hostUserId === userId;
+  const participant = session.participants.find((item) => item.userId === userId);
+  return {
+    status: "FINISHED",
+    phase: null,
+    leaderboard,
+    myResult: isHost ? null : resultForParticipant(leaderboard, participant?.id),
+  };
+}
+
 export function createGameService(prisma) {
   const timers = new Map();
 
@@ -60,7 +74,9 @@ export function createGameService(prisma) {
 
   async function getPhaseSnapshot(sessionId, userId) {
     const session = await loadSession(sessionId);
-    if (!session || !session.phase || !["QUESTION_ACTIVE", "QUESTION_REVIEW"].includes(session.phase)) return null;
+    if (!session) return null;
+    if (session.status === "FINISHED") return finishedSnapshot(session, userId);
+    if (!session.phase || !["QUESTION_ACTIVE", "QUESTION_REVIEW"].includes(session.phase)) return null;
     const question = session.quiz.questions[session.currentQuestionIndex];
     if (!question) return null;
     const isHost = session.hostUserId === userId;
@@ -105,6 +121,7 @@ export function createGameService(prisma) {
     const optionStats = question.options.map((option) => ({
       optionId: option.id,
       selectedCount: answers.reduce((count, answer) => count + (answer.selectedOptions.some((item) => item.answerOptionId === option.id) ? 1 : 0), 0),
+      isCorrect: option.isCorrect,
     }));
     return {
       ...base,
@@ -135,7 +152,7 @@ export function createGameService(prisma) {
     if (!session) throw new GameError("SESSION_NOT_FOUND", "Сессия не найдена");
     if (session.hostUserId !== userId) throw new GameError("FORBIDDEN", "Только ведущий может запустить вопрос");
     if (session.status !== "WAITING" && session.status !== "RUNNING") throw new GameError("INVALID_SESSION_STATE", "Вопрос нельзя запустить в текущем состоянии");
-    if (session.phase !== "READY_FOR_QUESTION") throw new GameError("INVALID_SESSION_STATE", "Вопрос уже запущен или закрыт");
+    if (session.phase !== "READY_FOR_QUESTION" && session.phase !== "QUESTION_REVIEW") throw new GameError("INVALID_SESSION_STATE", "Вопрос уже запущен или закрыт");
     if (session.participants.length === 0) throw new GameError("NO_PARTICIPANTS", "Нужен хотя бы один участник");
 
     const nextIndex = session.currentQuestionIndex < 0 ? 0 : session.currentQuestionIndex + 1;
@@ -144,13 +161,13 @@ export function createGameService(prisma) {
     const startedAt = new Date();
     const endsAt = new Date(startedAt.getTime() + session.timeLimitSeconds * 1000);
     const updated = await prisma.quizSession.updateMany({
-      where: { id: sessionId, hostUserId: userId, phase: "READY_FOR_QUESTION", status: { in: ["WAITING", "RUNNING"] } },
+      where: { id: sessionId, hostUserId: userId, phase: session.phase, status: { in: ["WAITING", "RUNNING"] } },
       data: { status: "RUNNING", phase: "QUESTION_ACTIVE", currentQuestionIndex: nextIndex, questionStartedAt: startedAt, questionEndsAt: endsAt, startedAt: session.startedAt ?? startedAt },
     });
     if (updated.count !== 1) throw new GameError("INVALID_SESSION_STATE", "Вопрос уже запускается");
 
     scheduleClose(sessionId, io, endsAt);
-    const event = { sessionId, phase: "QUESTION_ACTIVE", currentQuestion: safeQuestion(question, endsAt, session.quiz.questions.length) };
+    const event = { sessionId, status: "RUNNING", phase: "QUESTION_ACTIVE", currentQuestion: safeQuestion(question, endsAt, session.quiz.questions.length) };
     io.to(roomName(sessionId)).emit("question:started", event);
     return event;
   }
@@ -228,6 +245,30 @@ export function createGameService(prisma) {
     return hostSnapshot;
   }
 
+  async function finishSession(sessionId, userId, io) {
+    const session = await loadSession(sessionId);
+    if (!session) throw new GameError("SESSION_NOT_FOUND", "Сессия не найдена");
+    if (session.hostUserId !== userId) throw new GameError("FORBIDDEN", "Только ведущий может завершить игру");
+    if (session.status !== "RUNNING" || session.phase !== "QUESTION_REVIEW") throw new GameError("INVALID_SESSION_STATE", "Игру можно завершить только после закрытия вопроса");
+    if (session.currentQuestionIndex < session.quiz.questions.length - 1) throw new GameError("INVALID_SESSION_STATE", "Сначала завершите все вопросы");
+
+    const finishedAt = new Date();
+    const updated = await prisma.quizSession.updateMany({
+      where: { id: sessionId, hostUserId: userId, status: "RUNNING", phase: "QUESTION_REVIEW" },
+      data: { status: "FINISHED", phase: null, pin: null, questionStartedAt: null, questionEndsAt: null, finishedAt },
+    });
+    if (updated.count !== 1) throw new GameError("INVALID_SESSION_STATE", "Игра уже завершается");
+
+    clearTimer(sessionId);
+    const finishedSession = await loadSession(sessionId);
+    const hostSnapshot = { sessionId, ...finishedSnapshot(finishedSession, userId) };
+    for (const socket of io.sockets.sockets.values()) {
+      if (socket.data.sessionId !== sessionId) continue;
+      socket.emit("session:finished", { sessionId, ...finishedSnapshot(finishedSession, socket.data.userId) });
+    }
+    return hostSnapshot;
+  }
+
   async function recover(io) {
     const sessions = await prisma.quizSession.findMany({ where: { status: "RUNNING", phase: "QUESTION_ACTIVE" } });
     for (const session of sessions) {
@@ -235,5 +276,5 @@ export function createGameService(prisma) {
     }
   }
 
-  return { getPhaseSnapshot, startQuestion, submitAnswer, closeQuestion, recover };
+  return { getPhaseSnapshot, startQuestion, submitAnswer, closeQuestion, finishSession, recover };
 }
