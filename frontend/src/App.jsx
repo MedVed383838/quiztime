@@ -12,13 +12,40 @@ function Home() {
   return <main className="app-shell home-shell"><header className="public-header"><Link className="brand-link" to="/">QuizTime</Link><nav><Link to="/login">Вход</Link><Link className="primary-link" to="/register">Регистрация</Link></nav></header><section className="home-hero"><p className="eyebrow">Интерактивные квизы</p><h1>Игра начинается<br />с одного PIN-кода</h1><p>Присоединяйтесь к игре по шестизначному коду или создавайте собственные квизы для команды и друзей.</p><div className="home-actions"><Link className="primary-link" to="/login">Войти в аккаунт</Link><Link className="secondary-link" to="/register">Создать квиз</Link></div></section><footer className="public-footer">© 2026 QuizTime Interactive</footer></main>;
 }
 
+function formatHistoryDate(value) {
+  return value ? new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "Дата не указана";
+}
+
 function Dashboard() {
   const { user, logout } = useAuth();
   const [quizzes, setQuizzes] = useState([]);
+  const [hostedSessions, setHostedSessions] = useState([]);
+  const [participations, setParticipations] = useState([]);
+  const [tab, setTab] = useState("quizzes");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   useEffect(() => {
-    fetch("/api/quizzes", { credentials: "include" }).then((response) => response.json()).then((body) => setQuizzes(body.data.quizzes));
+    let active = true;
+    Promise.all([
+      fetch("/api/quizzes", { credentials: "include" }),
+      fetch("/api/me/hosted-sessions", { credentials: "include" }),
+      fetch("/api/me/participations", { credentials: "include" }),
+    ]).then(async ([quizzesResponse, hostedResponse, participationsResponse]) => {
+      const [quizzesBody, hostedBody, participationsBody] = await Promise.all([quizzesResponse.json(), hostedResponse.json(), participationsResponse.json()]);
+      if (!quizzesResponse.ok || !hostedResponse.ok || !participationsResponse.ok) throw new Error("Не удалось загрузить данные кабинета");
+      if (!active) return;
+      setQuizzes(quizzesBody.data.quizzes);
+      setHostedSessions(hostedBody.data.sessions);
+      setParticipations(participationsBody.data.sessions);
+    }).catch((requestError) => {
+      if (active) setError(requestError.message);
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => { active = false; };
   }, []);
-  return <main className="app-shell dashboard-shell"><section className="dashboard-card"><header className="dashboard-header"><div><p className="eyebrow">Личный кабинет</p><h1>Здравствуйте, {user.displayName}</h1><p className="dashboard-copy">Создавайте квизы, готовьте вопросы и запускайте игры.</p></div><div className="header-actions"><Link className="secondary-link" to="/join">Войти по PIN</Link><Link className="primary-link" to="/quizzes/new">+ Создать квиз</Link><button className="icon-button" onClick={logout}>Выйти</button></div></header><div className="section-heading"><div><p className="eyebrow">Мои квизы</p><h2>Все ваши интерактивы</h2></div><span>{quizzes.length}</span></div><div className="quiz-list">{quizzes.length === 0 && <div className="empty-state"><strong>Квизов пока нет</strong><p>Начните с создания первого квиза.</p></div>}{quizzes.map((quiz) => <article className="quiz-item" key={quiz.id}><div className="quiz-status-icon" aria-hidden="true">?</div><div className="quiz-item-content"><strong>{quiz.title}</strong><p>{quiz.category.name} · {quiz.questionCount} вопросов</p><span className={`status-chip status-${quiz.status.toLowerCase()}`}>{quiz.status === "READY" ? "Готов к запуску" : quiz.status === "ARCHIVED" ? "Архив" : "Черновик"}</span></div><div className="quiz-item-actions"><Link className="text-link" to={`/quizzes/${quiz.id}/edit`}>Открыть</Link>{quiz.status === "READY" && <Link className="primary-link" to={`/sessions/start/${quiz.id}`}>Запустить</Link>}</div></article>)}</div></section></main>;
+  const count = tab === "quizzes" ? quizzes.length : tab === "hosted" ? hostedSessions.length : participations.length;
+  return <main className="app-shell dashboard-shell"><section className="dashboard-card"><header className="dashboard-header"><div><p className="eyebrow">Личный кабинет</p><h1>Здравствуйте, {user.displayName}</h1><p className="dashboard-copy">Создавайте квизы, проводите игры и анализируйте результаты.</p></div><div className="header-actions"><Link className="secondary-link" to="/join">Войти по PIN</Link><Link className="primary-link" to="/quizzes/new">+ Создать квиз</Link><button className="icon-button" onClick={logout}>Выйти</button></div></header><div className="dashboard-tabs" role="tablist"><button className={tab === "quizzes" ? "active" : ""} type="button" onClick={() => setTab("quizzes")}>Мои квизы</button><button className={tab === "hosted" ? "active" : ""} type="button" onClick={() => setTab("hosted")}>Проведённые игры</button><button className={tab === "participations" ? "active" : ""} type="button" onClick={() => setTab("participations")}>История участия</button></div>{error && <p className="form-alert" role="alert">{error}</p>}{loading ? <div className="empty-state"><strong>Загружаем кабинет…</strong></div> : <><div className="section-heading"><div><p className="eyebrow">{tab === "quizzes" ? "Мои квизы" : tab === "hosted" ? "Проведённые игры" : "История участия"}</p><h2>{tab === "quizzes" ? "Все ваши интерактивы" : tab === "hosted" ? "Завершённые игры" : "Ваши результаты"}</h2></div><span>{count}</span></div>{tab === "quizzes" && <div className="quiz-list">{quizzes.length === 0 && <div className="empty-state"><strong>Квизов пока нет</strong><p>Начните с создания первого квиза.</p></div>}{quizzes.map((quiz) => <article className="quiz-item" key={quiz.id}><div className="quiz-status-icon" aria-hidden="true">?</div><div className="quiz-item-content"><strong>{quiz.title}</strong><p>{quiz.category.name} · {quiz.questionCount} вопросов</p><span className={`status-chip status-${quiz.status.toLowerCase()}`}>{quiz.status === "READY" ? "Готов к запуску" : quiz.status === "ARCHIVED" ? "Архив" : "Черновик"}</span></div><div className="quiz-item-actions"><Link className="text-link" to={`/quizzes/${quiz.id}/edit`}>Открыть</Link>{quiz.status === "READY" && <Link className="primary-link" to={`/sessions/start/${quiz.id}`}>Запустить</Link>}</div></article>)}</div>}{tab === "hosted" && <div className="history-list">{hostedSessions.length === 0 && <div className="empty-state"><strong>Проведённых игр пока нет</strong><p>Здесь появятся завершённые вами сессии.</p></div>}{hostedSessions.map((session) => <article className="history-item" key={session.id}><div className="history-icon" aria-hidden="true">★</div><div><strong>{session.quizTitle}</strong><p>{formatHistoryDate(session.finishedAt)} · {session.participantCount} участников</p></div><Link className="text-link" to={`/sessions/${session.id}/results`}>Результаты</Link></article>)}</div>}{tab === "participations" && <div className="history-list">{participations.length === 0 && <div className="empty-state"><strong>История участия пуста</strong><p>Завершите игру в роли участника — результат появится здесь.</p></div>}{participations.map((session) => <article className="history-item participation-item" key={session.id}><div className="history-icon" aria-hidden="true">★</div><div><strong>{session.quizTitle}</strong><p>{formatHistoryDate(session.finishedAt)} · {session.participantCount} участников</p><div className="result-chips"><span>{session.rank} место</span><span>{session.totalScore} баллов</span><span>{session.correctAnswersCount} правильных</span></div></div><Link className="text-link" to={`/sessions/${session.id}/results`}>Открыть</Link></article>)}</div>}</>}</section></main>;
 }
 
 function QuizEditor() {
