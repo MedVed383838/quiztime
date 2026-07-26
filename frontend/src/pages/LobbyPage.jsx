@@ -19,6 +19,10 @@ function initials(displayName) {
     .join("") || "?";
 }
 
+function GameBrand() {
+  return <Link className="brand-mark brand-navigation" to="/dashboard"><span className="brand-symbol" aria-hidden="true">?</span><span>QuizTime</span></Link>;
+}
+
 export default function LobbyPage() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
@@ -141,12 +145,12 @@ export default function LobbyPage() {
     });
   };
 
-  if (error) return <main className="game-shell"><section className="game-card"><p className="game-error" role="alert">{error}</p><Link className="game-secondary-button" to="/dashboard">В кабинет</Link></section></main>;
-  if (!snapshot) return <main className="game-shell"><section className="game-card"><p>Подключение к игре…</p></section></main>;
+  if (error) return <main className="game-shell"><section className="game-card"><GameBrand /><p className="game-error" role="alert">{error}</p><Link className="game-secondary-button" to="/dashboard">В кабинет</Link></section></main>;
+  if (!snapshot) return <main className="game-shell"><section className="game-card"><GameBrand /><p>Подключение к игре…</p></section></main>;
 
   if (snapshot.status === "FINISHED") {
     return <main className="game-shell"><section className="game-card results-screen">
-      <div className="game-topbar"><span className="brand-mark">QuizTime</span><span>Игра завершена</span></div>
+      <div className="game-topbar"><GameBrand /><span>Игра завершена</span></div>
       <h1>Итоговый лидерборд</h1>
       {snapshot.myResult && <p className="my-result">Ваш результат: <strong>{snapshot.myResult.rank} место</strong> · {snapshot.myResult.totalScore} баллов</p>}
       <ol className="leaderboard-list">{(snapshot.leaderboard ?? []).map((item) => <li key={item.participantId} className={`leaderboard-item rank-${item.rank} ${snapshot.myResult?.rank === item.rank && snapshot.myResult?.totalScore === item.totalScore ? "current" : ""}`}><span className="leaderboard-rank">{item.rank}</span><span className="leaderboard-name">{item.displayName}</span><span className="leaderboard-score">{item.totalScore} баллов</span><small>{item.correctAnswersCount} правильных</small></li>)}</ol>
@@ -156,7 +160,7 @@ export default function LobbyPage() {
 
   if (snapshot.phase === "QUESTION_ACTIVE") {
     return <main className={`game-shell ${snapshot.isHost ? "host-game-shell" : "participant-game-shell"}`}><section className={`game-card question-screen ${snapshot.isHost ? "host-question-screen" : "participant-question-screen"}`}>
-      <div className="game-topbar"><span className="brand-mark">QuizTime</span><span className="session-context">{snapshot.isHost ? `PIN: ${snapshot.pin}` : `Ведущий: ${snapshot.hostDisplayName}`}</span><span className="timer-badge">{formatRemaining(remaining ?? 0)}</span></div>
+      <div className="game-topbar"><GameBrand /><span className="session-context">{snapshot.isHost ? `PIN: ${snapshot.pin}` : `Ведущий: ${snapshot.hostDisplayName}`}</span><span className="timer-badge">{formatRemaining(remaining ?? 0)}</span></div>
       <span className="question-type">{typeLabel(snapshot.currentQuestion.type)}</span>
       <p className="question-progress">Вопрос {snapshot.currentQuestion.position} из {snapshot.currentQuestion.totalQuestions}</p>
       <h1>{snapshot.currentQuestion.text}</h1>
@@ -172,13 +176,13 @@ export default function LobbyPage() {
     const result = snapshot.lastQuestionResult;
     const hasNextQuestion = snapshot.reviewStats?.hasNextQuestion;
     return <main className={`game-shell ${snapshot.isHost ? "host-game-shell" : "participant-game-shell"}`}><section className={`game-card review-screen ${snapshot.isHost ? "host-review-screen" : "participant-review-screen"}`}>
-      <div className="game-topbar"><span className="brand-mark">QuizTime</span><span>{snapshot.currentQuestion?.text}</span></div>
-      {snapshot.isHost ? <><h1>Статистика ответа</h1><div className="review-stats"><strong>{snapshot.reviewStats.answeredCount} ответов</strong><strong>{snapshot.reviewStats.correctCount} правильных</strong></div><div className="option-stats">{snapshot.reviewStats.optionStats.map((item) => { const option = snapshot.currentQuestion.options.find((currentOption) => currentOption.id === item.optionId); return <div className={`option-stat ${item.isCorrect ? "correct" : ""}`} key={item.optionId} style={{ "--bar-height": `${Math.max(24, item.selectedCount * 48)}px` }}><b>{item.selectedCount}</b><span>{option?.text}</span>{item.isCorrect && <small>Правильный</small>}</div>; })}</div><div className="review-actions"><button className="game-primary-button" type="button" onClick={hasNextQuestion ? startQuestion : finishSession} disabled={busy}>{hasNextQuestion ? "Следующий вопрос" : "Завершить игру"}</button><button className="game-secondary-button" type="button" onClick={cancel} disabled={busy}>Завершить сессию</button></div></> : <><h1>{result?.isCorrect ? "Правильный ответ!" : "Ответ неверный"}</h1><p className="score-result">+{result?.awardedPoints ?? 0} баллов</p><p>Ваш результат: {result?.totalScore ?? snapshot.myScore} баллов</p><p className="review-note">Ожидайте следующего вопроса или завершения игры ведущим.</p></>}
+      <div className="game-topbar"><GameBrand /><span className="review-question-cue">Вопрос {snapshot.currentQuestion?.position} из {snapshot.currentQuestion?.totalQuestions}</span></div>
+      {snapshot.isHost ? <><p className="review-eyebrow">Результат вопроса</p><h1>Статистика ответа</h1><div className="review-stats"><strong><span>{snapshot.reviewStats.answeredCount}</span> ответов</strong><strong><span>{snapshot.reviewStats.correctCount}</span> правильных</strong></div><div className="option-stats">{snapshot.reviewStats.optionStats.map((item) => { const option = snapshot.currentQuestion.options.find((currentOption) => currentOption.id === item.optionId); const percent = snapshot.reviewStats.answeredCount ? Math.round((item.selectedCount / snapshot.reviewStats.answeredCount) * 100) : 0; const height = Math.max(2.25, 2.25 + percent * 0.14); return <div className={`option-stat ${item.isCorrect ? "correct" : ""}`} key={item.optionId}><div className="option-stat-bar" style={{ "--bar-height": `${height}rem` }}><b>{item.selectedCount}</b></div><div className="option-stat-caption"><span>{option?.text}</span><small>{item.isCorrect ? "Правильный ответ" : `${percent}% участников`}</small></div></div>; })}</div><div className="review-actions"><button className="game-primary-button" type="button" onClick={hasNextQuestion ? startQuestion : finishSession} disabled={busy}>{hasNextQuestion ? "Следующий вопрос" : "Завершить игру"}</button><button className="game-secondary-button" type="button" onClick={cancel} disabled={busy}>Завершить сессию</button></div></> : <><h1>{result?.isCorrect ? "Правильный ответ!" : "Ответ неверный"}</h1><p className="score-result">+{result?.awardedPoints ?? 0} баллов</p><p>Ваш результат: {result?.totalScore ?? snapshot.myScore} баллов</p><p className="review-note">Ожидайте следующего вопроса или завершения игры ведущим.</p></>}
     </section></main>;
   }
 
   return <main className={`game-shell ${snapshot.isHost ? "host-game-shell" : "participant-game-shell"}`}><section className={`game-card lobby-screen ${snapshot.isHost ? "host-lobby-screen" : "participant-lobby-screen"}`}>
-    <div className="game-topbar"><span className="brand-mark">QuizTime</span><span className="lobby-badge">● Игровое лобби</span></div>
+    <div className="game-topbar"><GameBrand /><span className="lobby-badge">● Игровое лобби</span></div>
     {snapshot.isHost && <div className="host-lobby-intro"><p>Присоединяйтесь к игре по PIN-коду</p><h1>{snapshot.quizTitle}</h1></div>}
     <div className="pin-panel"><p>{snapshot.isHost ? "КОД ИГРЫ" : "ОЖИДАНИЕ СТАРТА"}</p><strong>{snapshot.pin ?? "Ведущий скоро начнёт"}</strong></div>
     {!snapshot.isHost && <div className="participant-lobby-intro"><h1>{snapshot.quizTitle}</h1><p>Ведущий: <strong>{snapshot.hostDisplayName}</strong></p><p>Ожидайте начала игры.</p></div>}

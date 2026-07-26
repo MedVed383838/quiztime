@@ -45,17 +45,18 @@ model Quiz {
 }
 
 model Question {
-  id        Int                 @id @default(autoincrement())
-  quizId    Int
-  text      String
-  imageUrl  String?
-  type      QuestionType
-  position  Int
-  createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
-  options   AnswerOption[]
-  answers   ParticipantAnswer[]
-  quiz      Quiz                @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  id               Int                 @id @default(autoincrement())
+  quizId           Int
+  text             String
+  imageUrl         String?
+  type             QuestionType
+  timeLimitSeconds Int                 @default(30)
+  position         Int
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  options          AnswerOption[]
+  answers          ParticipantAnswer[]
+  quiz             Quiz                @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
   @@unique([quizId, position])
 }

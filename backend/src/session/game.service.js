@@ -15,6 +15,7 @@ function safeQuestion(question, questionEndsAt, totalQuestions) {
     text: question.text,
     imageUrl: question.imageUrl,
     type: question.type,
+    timeLimitSeconds: question.timeLimitSeconds,
     position: question.position,
     totalQuestions,
     questionEndsAt: questionEndsAt?.toISOString() ?? null,
@@ -159,7 +160,7 @@ export function createGameService(prisma) {
     const question = session.quiz.questions[nextIndex];
     if (!question) throw new GameError("NO_NEXT_QUESTION", "Следующий вопрос не найден");
     const startedAt = new Date();
-    const endsAt = new Date(startedAt.getTime() + session.timeLimitSeconds * 1000);
+    const endsAt = new Date(startedAt.getTime() + question.timeLimitSeconds * 1000);
     const updated = await prisma.quizSession.updateMany({
       where: { id: sessionId, hostUserId: userId, phase: session.phase, status: { in: ["WAITING", "RUNNING"] } },
       data: { status: "RUNNING", phase: "QUESTION_ACTIVE", currentQuestionIndex: nextIndex, questionStartedAt: startedAt, questionEndsAt: endsAt, startedAt: session.startedAt ?? startedAt },
