@@ -7,6 +7,7 @@ import { buildLeaderboard, resultForParticipant } from "./results.service.js";
 const input = z.object({ quizId: z.number().int().positive() });
 const fail = (res, status, code, message) => res.status(status).json({ error: { code, message, details: null } });
 const pin = () => String(Math.floor(100000 + Math.random() * 900000));
+const MAX_PIN_ATTEMPTS = 10;
 
 export function createSessionRouter(prisma) {
   const router = express.Router(); router.use(requireAuth(prisma));
@@ -20,7 +21,7 @@ export function createSessionRouter(prisma) {
       if (!valid) return fail(res, 409, "QUIZ_NOT_READY", "Квиз не содержит валидных вопросов");
       const active = await prisma.quizSession.findFirst({ where: { quizId: quiz.id, status: { in: ["WAITING", "RUNNING"] } } });
       if (active) return fail(res, 409, "ACTIVE_SESSION_ALREADY_EXISTS", "Для этого квиза уже существует активная сессия");
-      for (let attempt = 0; attempt < 10; attempt += 1) { try { const session = await prisma.quizSession.create({ data: { quizId: quiz.id, hostUserId: req.user.id, pin: pin(), status: "WAITING", phase: "READY_FOR_QUESTION", timeLimitSeconds: quiz.defaultTimeLimitSeconds, pointsPerQuestion: quiz.defaultPointsPerQuestion, revealCorrectAnswer: quiz.revealCorrectAnswer } }); return res.status(201).json({ data: { session: { id: session.id, quizId: session.quizId, quizTitle: quiz.title, pin: session.pin, status: session.status, phase: session.phase, participantCount: 0 } } }); } catch (error) { if (error?.code !== "P2002") throw error; } }
+      for (let attempt = 0; attempt < MAX_PIN_ATTEMPTS; attempt += 1) { try { const session = await prisma.quizSession.create({ data: { quizId: quiz.id, hostUserId: req.user.id, pin: pin(), status: "WAITING", phase: "READY_FOR_QUESTION", timeLimitSeconds: quiz.defaultTimeLimitSeconds, pointsPerQuestion: quiz.defaultPointsPerQuestion, revealCorrectAnswer: quiz.revealCorrectAnswer } }); return res.status(201).json({ data: { session: { id: session.id, quizId: session.quizId, quizTitle: quiz.title, pin: session.pin, status: session.status, phase: session.phase, participantCount: 0 } } }); } catch (error) { if (error?.code !== "P2002") throw error; const activeSession = await prisma.quizSession.findFirst({ where: { quizId: quiz.id, status: { in: ["WAITING", "RUNNING"] } }, select: { id: true } }); if (activeSession) return fail(res, 409, "ACTIVE_SESSION_ALREADY_EXISTS", "Для этого квиза уже существует активная сессия"); } }
       return fail(res, 503, "PIN_GENERATION_FAILED", "Не удалось создать уникальный PIN");
     } catch (error) { if (error?.code === "P2002") return fail(res, 409, "ACTIVE_SESSION_ALREADY_EXISTS", "Для этого квиза уже существует активная сессия"); return next(error); }
   });

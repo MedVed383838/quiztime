@@ -71,6 +71,9 @@ web_modules/
 !.env.example
 backend\.env
 
+# Runtime question images
+backend/uploads/questions/
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
