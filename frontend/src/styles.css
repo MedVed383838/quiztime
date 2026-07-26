@@ -2,11 +2,34 @@
   font-family: system-ui, sans-serif;
   color: #18212f;
   background: #f5f7fb;
+  overflow-x: clip;
 }
 
 * { box-sizing: border-box; }
 
-body { margin: 0; }
+body { max-width: 100%; margin: 0; overflow-x: hidden; }
+
+.game-shell,
+.game-card,
+.game-topbar,
+.game-topbar > *,
+.question-screen h1,
+.review-screen h1,
+.answer-option-text,
+.session-context,
+.host-lobby-intro h1,
+.option-stat span {
+  min-width: 0;
+}
+
+.question-screen h1,
+.review-screen h1,
+.answer-option-text,
+.session-context,
+.host-lobby-intro h1,
+.option-stat span {
+  overflow-wrap: anywhere;
+}
 
 .app-shell {
   min-height: 100vh;
