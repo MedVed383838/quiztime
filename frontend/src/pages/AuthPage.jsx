@@ -18,7 +18,7 @@ export default function AuthPage({ mode }) {
     try {
       if (isRegister) await register(form);
       else await login({ email: form.email, password: form.password });
-      navigate(location.state?.returnTo ?? "/dashboard", { replace: true });
+      navigate(location.state?.returnTo ?? "/dashboard", { replace: true, state: location.state?.pin ? { pin: location.state.pin } : null });
     } catch (submitError) {
       setError(submitError.message);
     } finally {

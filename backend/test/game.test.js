@@ -54,7 +54,7 @@ beforeAll(async () => {
   const category = await prisma.category.findFirst();
   const quiz = await request(app).post("/api/quizzes").set("Cookie", ownerCookie).send({ title: "Realtime game", categoryId: category.id, defaultTimeLimitSeconds: 5, defaultPointsPerQuestion: 1000, revealCorrectAnswer: true });
   quizId = quiz.body.data.quiz.id;
-  const question = await request(app).post(`/api/quizzes/${quizId}/questions`).set("Cookie", ownerCookie).send({ text: "Какой вариант правильный?", type: "SINGLE_CHOICE", options: [{ text: "Правильный", isCorrect: true }, { text: "Другой", isCorrect: false }] });
+  const question = await request(app).post(`/api/quizzes/${quizId}/questions`).set("Cookie", ownerCookie).send({ text: "Какой вариант правильный?", type: "SINGLE_CHOICE", timeLimitSeconds: 5, options: [{ text: "Правильный", isCorrect: true }, { text: "Другой", isCorrect: false }] });
   questionId = question.body.data.question.id;
   correctOptionId = question.body.data.question.options.find((option) => option.isCorrect).id;
   await request(app).post(`/api/quizzes/${quizId}/ready`).set("Cookie", ownerCookie);
@@ -81,6 +81,7 @@ describe("realtime question flow", () => {
     const hostReview = waitFor(hostSocket, "question:review");
     const started = await emitAck(hostSocket, "question:start", { sessionId });
     expect(started.ok).toBe(true);
+    expect(started.data.currentQuestion.timeLimitSeconds).toBe(5);
     expect(started.data.currentQuestion.options[0]).not.toHaveProperty("isCorrect");
 
     const answer = await emitAck(playerSocket, "answer:submit", { sessionId, questionId, optionIds: [correctOptionId] });
